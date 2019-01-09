@@ -58,6 +58,12 @@ app.get('/authorize', function(req, res){
 
 app.get('/callback', function(req, res){
 
+  if (req.query.state != state) {
+    console.log('State DOES NOT MATCH: expected %s got %s', state, req.query.state)
+    res.render('error', { error: 'State value did not match' })
+    return
+  }
+
   var code = req.query.code
 
   var form_data = qs.stringify({

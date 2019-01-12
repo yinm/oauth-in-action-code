@@ -26,10 +26,11 @@ var authServer = {
 
 // client information
 var clients = [
-
-  /*
-   * Enter client information here
-   */
+	{
+		"client_id": "oauth-client-1",
+		"client_secret": "oauth-client-secret-1",
+		"redirect_uris": ["http://localhost:9000/callback"]
+	}
 ];
 
 var codes = {};
@@ -45,11 +46,20 @@ app.get('/', function(req, res) {
 });
 
 app.get("/authorize", function(req, res){
-	
-	/*
-	 * Process the request, validate the client, and send the user to the approval page
-	 */
-	
+  var client = getClient(req.query.client_id)
+
+	if (!client) {
+		res.render('error', { error: 'Unknown client' })
+		return
+	} else if (!__.contains(client.redirect_uris, req.query.redirect_uri)) {
+		res.render('error', { error: 'Invalid redirect URI' })
+	} else {
+		var reqid = randomstring.generate(8)
+		requests[reqid] = req.query
+
+		res.render('approve', { client: client, reqid: reqid })
+    return
+	}
 });
 
 app.post('/approve', function(req, res) {
@@ -57,7 +67,7 @@ app.post('/approve', function(req, res) {
 	/*
 	 * Process the results of the approval page, authorize the client
 	 */
-	
+
 });
 
 app.post("/token", function(req, res){
@@ -80,14 +90,14 @@ var buildUrl = function(base, options, hash) {
 	if (hash) {
 		newUrl.hash = hash;
 	}
-	
+
 	return url.format(newUrl);
 };
 
 var decodeClientCredentials = function(auth) {
 	var clientCredentials = new Buffer(auth.slice('basic '.length), 'base64').toString().split(':');
 	var clientId = querystring.unescape(clientCredentials[0]);
-	var clientSecret = querystring.unescape(clientCredentials[1]);	
+	var clientSecret = querystring.unescape(clientCredentials[1]);
 	return { id: clientId, secret: clientSecret };
 };
 
@@ -102,4 +112,4 @@ var server = app.listen(9001, 'localhost', function () {
 
   console.log('OAuth Authorization Server is listening at http://%s:%s', host, port);
 });
- 
+
